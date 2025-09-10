@@ -17,11 +17,17 @@ public:
 private slots:
     void onOpen();
     void onSave();
+    void onMirrorX();
+    void onMirrorY();
+    void mirrorImageX();
+    void mirrorImagey();
 
 private:
     QLabel *rotulo;
     QPushButton *open;
     QPushButton *save;
+    QPushButton *mirrorX;
+    QPushButton *mirrorY;
     QLabel *srcImageLabel;
     QLabel *dstImageLabel;
     QImage image_src;

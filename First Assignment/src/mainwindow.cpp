@@ -14,6 +14,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     open = new QPushButton("Open", this);
     save = new QPushButton("Save", this);
+    mirrorX = new QPushButton("mirror in X", this);
+    mirrorY = new QPushButton("mirror in Y", this);
 
     image_src = QImage();
     image_dst = QImage();
@@ -41,6 +43,8 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addStretch();
     mainLayout->addLayout(imagesLayout);
     mainLayout->addStretch();
+    mainLayout->addWidget(mirrorX);
+    mainLayout->addWidget(mirrorY);
 
     QWidget *widgetCentral = new QWidget();
     widgetCentral->setLayout(mainLayout);
@@ -48,6 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(open, &QPushButton::clicked, this, &MainWindow::onOpen);
     connect(save, &QPushButton::clicked, this, &MainWindow::onSave);
+    connect(mirrorX, &QPushButton::clicked, this, &MainWindow::mirrorImageX);
+    connect(mirrorY, &QPushButton::clicked, this, &MainWindow::mirrorImagey);
 }
 
 MainWindow::~MainWindow()
@@ -100,6 +106,65 @@ void MainWindow::onOpen()
             rotulo->setText("Error: Failed to load image.");
         }
     }
+}
+
+void MainWindow::onMirrorX(){
+    mirrorImageX();
+}
+
+void MainWindow::onMirrorY(){
+    mirrorImagey();
+}
+
+void MainWindow::mirrorImageX()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to mirror!");
+        return;
+    }
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits() + image_dst.width() * 4 * (image_dst.height()-1);
+
+    for (int i = 0; i < image_src.height(); i++){
+        memcpy(p_dst, p_src, image_dst.width() * 4);
+        p_src +=  image_dst.width() * 4;
+        p_dst -=  image_dst.width() * 4;
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image mirrored!");
+}
+
+void MainWindow::mirrorImagey()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to mirror!");
+        return;
+    }
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits() + image_dst.width() * 4 - 4;
+
+    for (int i = 0; i < image_src.height(); i++){
+        for (int j = 0; j < image_src.width(); j++){
+            memcpy(p_dst, p_src, 4);
+            p_src += 4;
+            p_dst -= 4;
+        }
+        p_dst += 2 * image_dst.width() * 4;
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image mirrored!");
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
