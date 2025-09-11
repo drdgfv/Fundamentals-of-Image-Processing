@@ -3,6 +3,8 @@
 #include <QFileDialog>
 #include <QDir>       
 
+
+// Constructor =====================================================================================
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -16,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
     save = new QPushButton("Save", this);
     mirrorX = new QPushButton("mirror in X", this);
     mirrorY = new QPushButton("mirror in Y", this);
+    grayScale = new QPushButton("Gray Scale", this);
+    quantization = new QPushButton("Quantization", this);
 
     image_src = QImage();
     image_dst = QImage();
@@ -45,6 +49,8 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addStretch();
     mainLayout->addWidget(mirrorX);
     mainLayout->addWidget(mirrorY);
+    mainLayout->addWidget(grayScale);
+    mainLayout->addWidget(quantization);
 
     QWidget *widgetCentral = new QWidget();
     widgetCentral->setLayout(mainLayout);
@@ -54,12 +60,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(save, &QPushButton::clicked, this, &MainWindow::onSave);
     connect(mirrorX, &QPushButton::clicked, this, &MainWindow::mirrorImageX);
     connect(mirrorY, &QPushButton::clicked, this, &MainWindow::mirrorImagey);
+    connect(grayScale, &QPushButton::clicked, this, &MainWindow::grayScaleImage);
+    connect(quantization, &QPushButton::clicked, this, &MainWindow::quantizationImage);
 }
 
+// Destructor ======================================================================================
 MainWindow::~MainWindow()
 {
 }
 
+// Button handlers =================================================================================
 void MainWindow::onSave()
 {
     if (fileName.isEmpty()) {
@@ -79,26 +89,20 @@ void MainWindow::onSave()
 
 void MainWindow::onOpen()
 {
-    // 1. Abre uma caixa de diálogo para o usuário selecionar um arquivo
     QString filePath = QFileDialog::getOpenFileName(
-        this,                                                    // Janela pai
-        tr("Abrir Imagem"),                                      // Título da caixa de diálogo
-        QDir::currentPath() + "/images",                        // Diretório inicial
-        tr("Arquivos de Imagem (*.png *.jpg *.jpeg *.bmp)")       // Filtro de arquivos
+        this,                                                    
+        tr("Abrir Imagem"),                                      
+        QDir::currentPath() + "/images",                        
+        tr("Arquivos de Imagem (*.png *.jpg *.jpeg *.bmp)")       
     );
 
-    // 2. Verifica se o usuário selecionou um arquivo (não clicou em "Cancelar")
     if (!filePath.isEmpty()) {
-        // 3. Carrega a imagem selecionada
         if (image_src.load(filePath)) {
-            // Copia a imagem de origem para a de destino
             image_dst = image_src; 
 
-            // Atualiza os labels para exibir as imagens
             srcImageLabel->setPixmap(QPixmap::fromImage(image_src));
             dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
 
-            // Extrai e exibe apenas o nome do arquivo no rótulo
             QFileInfo fileInfo(filePath);
             rotulo->setText(fileInfo.fileName());
             fileName = fileInfo.fileName();
@@ -116,6 +120,15 @@ void MainWindow::onMirrorY(){
     mirrorImagey();
 }
 
+void MainWindow::onGrayScale(){
+    grayScaleImage();
+}
+
+void MainWindow::onQuantization(){
+    quantizationImage(4);
+}
+
+// Image processing functions =====================================================================
 void MainWindow::mirrorImageX()
 {
     if (image_src.isNull()) {
@@ -167,6 +180,43 @@ void MainWindow::mirrorImagey()
     rotulo->setText("Image mirrored!");
 }
 
+void MainWindow::grayScaleImage()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to convert to gray scale!");
+        return;
+    }
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < image_src.height(); i++){
+        for (int j = 0; j < image_src.width(); j++){
+            int gray = (int)(0.299 * p_src[2] + 0.587 * p_src[1] + 0.114 * p_src[0]);
+            p_dst[0] = p_dst[1] = p_dst[2] = gray;
+            p_src += 4;
+            p_dst += 4;
+        }
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+
+    rotulo->setText("Image converted to gray scale!");
+}
+
+void MainWindow::quantizationImage(int levels)
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to quantize!");
+        return;
+    }
+
+    rotulo->setText("Image quantized!");
+}
+
+// Key event handlers ===============================================================================
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Escape) {
