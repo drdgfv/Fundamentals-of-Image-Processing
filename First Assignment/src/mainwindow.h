@@ -5,6 +5,10 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QLineEdit>
+#include <tuple>
+
+using namespace std;
 
 class MainWindow : public QMainWindow
 {
@@ -13,21 +17,19 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    
 
 private slots:
 
     //Button handlers ==================================
     void onOpen();
     void onSave();
-    void onMirrorX();
-    void onMirrorY();
-    void onGrayScale();
-    void onQuantization();
+    void onReset();
 
-    //Image processing functions =======================
+    //Image processing functions handlers =======================
     void mirrorImageX();
     void mirrorImagey();
-    void grayScaleImage();
+    tuple<int,int,int> grayScaleImage();
     void quantizationImage(int levels);
 
 
@@ -35,14 +37,18 @@ private:
 
     //GUI components ===============================
     QLabel *rotulo;
+    QLineEdit *quantizationLevel;
     QPushButton *open;
     QPushButton *save;
+    QPushButton *reset;
     QPushButton *mirrorX;
     QPushButton *mirrorY;
     QPushButton *grayScale;
     QPushButton *quantization;
+    QLabel *imageLabel;
     QLabel *srcImageLabel;
     QLabel *dstImageLabel;
+    QImage image_original;
     QImage image_src;
     QImage image_dst;
     QString fileName;
