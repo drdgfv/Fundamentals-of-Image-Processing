@@ -1,3 +1,4 @@
+#include <iostream>
 #include "mainwindow.h"
 #include <QKeyEvent>
 #include <QFileDialog>
@@ -25,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     rotulo = new QLabel("Open an image", this);
     rotulo->setAlignment(Qt::AlignCenter);
+    rotulo->setStyleSheet("color: rgba(123, 126, 151, 1);");
 
     quantizationLevel = new QLineEdit(this);
     quantizationLevel->setPlaceholderText("Q-Levels [2-256]");
@@ -39,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     contrastLevel->setFixedWidth(130);
 
     open = new QPushButton("Open", this);
+    select_target = new QPushButton("Select Target", this);
     save = new QPushButton("Save", this);
     reset = new QPushButton("Reset", this);
 
@@ -47,13 +50,17 @@ MainWindow::MainWindow(QWidget *parent)
     grayScale = new QPushButton("Gray Scale", this);
     quantization = new QPushButton("Quantization", this);
     histogram = new QPushButton("Histogram", this);
+    histogram_target = new QPushButton("Histogram Target", this);
     brightness = new QPushButton("Brightness", this);
     contrast = new QPushButton("Contrast", this);
     negative = new QPushButton("Negative", this);
+    equalization = new QPushButton("Equalization", this);
+    matching = new QPushButton("Matching", this);
 
     image_original = QImage();
     image_src = QImage();
     image_dst = QImage();
+    image_target = QImage();
 
     imageLabel = new QLabel(this);
     imageLabel->setAlignment(Qt::AlignCenter);
@@ -67,11 +74,22 @@ MainWindow::MainWindow(QWidget *parent)
     dstImageLabel->setAlignment(Qt::AlignCenter);
     dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
 
+    targetImageLabel = new QLabel(this);
+    targetImageLabel->setAlignment(Qt::AlignCenter);
+    targetImageLabel->setPixmap(QPixmap::fromImage(image_target));
+
+    viewTargetLabel = new QLabel(this);
+    viewTargetLabel->setAlignment(Qt::AlignCenter);
+    viewTargetLabel->setPixmap(QPixmap::fromImage(image_target));
+    targetImageLabel->setMaximumSize(200, 200);
+
     QHBoxLayout *topLayout = new QHBoxLayout;
     topLayout->addWidget(open);
     topLayout->addWidget(save);
     topLayout->addWidget(rotulo);
     topLayout->addStretch(); 
+    topLayout->addWidget(select_target);
+    topLayout->addWidget(histogram_target);
 
     QScrollArea *srcScrollArea = new QScrollArea;
     srcScrollArea->setWidget(srcImageLabel);
@@ -83,11 +101,15 @@ MainWindow::MainWindow(QWidget *parent)
     dstScrollArea->setWidgetResizable(true);
     dstScrollArea->setFixedSize(740, 660);
 
+    QScrollArea *targetArea = new QScrollArea;
+    targetArea->setWidget(viewTargetLabel);
+    targetArea->setWidgetResizable(true);
+    targetArea->setFixedSize(230, 200);
 
     QHBoxLayout *imagesLayout = new QHBoxLayout;
     imagesLayout->addWidget(srcScrollArea);
+    imagesLayout->addWidget(targetArea);
     imagesLayout->addWidget(dstScrollArea);
-
 
     QHBoxLayout *OperationsLayout = new QHBoxLayout;
     OperationsLayout->addWidget(mirrorX);
@@ -100,6 +122,8 @@ MainWindow::MainWindow(QWidget *parent)
     OperationsLayout->addWidget(contrast);
     OperationsLayout->addWidget(contrastLevel);
     OperationsLayout->addWidget(negative);
+    OperationsLayout->addWidget(equalization);
+    OperationsLayout->addWidget(matching);
     OperationsLayout->addWidget(histogram);
     OperationsLayout->addStretch();
     OperationsLayout->addWidget(reset);
@@ -117,15 +141,25 @@ MainWindow::MainWindow(QWidget *parent)
     this->setCentralWidget(widgetCentral);
 
     connect(open, &QPushButton::clicked, this, &MainWindow::onOpen);
+    connect(select_target, &QPushButton::clicked, this, &MainWindow::onSelectTarget);
     connect(save, &QPushButton::clicked, this, &MainWindow::onSave);
     connect(mirrorX, &QPushButton::clicked, this, &MainWindow::mirrorImageX);
     connect(mirrorY, &QPushButton::clicked, this, &MainWindow::mirrorImagey);
-    connect(grayScale, &QPushButton::clicked, this, &MainWindow::grayScaleImage);
+    connect(grayScale, &QPushButton::clicked, this, [this]() {
+        grayScaleImage(image_src, image_dst, dstImageLabel);
+    });
     connect(quantization, &QPushButton::clicked, this, &MainWindow::quantizationImage);
     connect(brightness, &QPushButton::clicked, this, &MainWindow::brightnessImage);
     connect(contrast, &QPushButton::clicked, this, &MainWindow::contrastImage);
     connect(negative, &QPushButton::clicked, this, &MainWindow::negativeImage);
-    connect(histogram, &QPushButton::clicked, this, &MainWindow::histogramImage);
+    connect(equalization, &QPushButton::clicked, this, &MainWindow::equalizationImage);
+    connect(histogram, &QPushButton::clicked, this, [this]() {
+        histogramImage(image_src, image_dst, dstImageLabel);
+    });
+    connect(histogram_target, &QPushButton::clicked, this, [this]() {
+        histogramImage(image_target, image_target, targetImageLabel);
+    });
+    connect(matching, &QPushButton::clicked, this, &MainWindow::matchingImage);
     connect(reset, &QPushButton::clicked, this, &MainWindow::onReset);
 
 }
@@ -159,7 +193,7 @@ void MainWindow::onOpen()
         this,                                                    
         tr("Abrir Imagem"),                                      
         QDir::currentPath() + "/images",                        
-        tr("Arquivos de Imagem (*.png *.jpg *.jpeg *.bmp)")       
+        tr("Arquivos de Imagem (*.png *.jpg *.jpeg *.bmp)")
     );
 
     if (!filePath.isEmpty()) {
@@ -193,6 +227,31 @@ void MainWindow::onReset()
     dstImageLabel->setPixmap(QPixmap::fromImage(image_src));
 
     rotulo->setText("Image reset to original!");
+}
+
+void MainWindow::onSelectTarget()
+{
+    QString filePath = QFileDialog::getOpenFileName(
+        this,                                                    
+        tr("Select Target Image"),                                      
+        QDir::currentPath() + "/images",                        
+        tr("Image Files (*.png *.jpg *.jpeg *.bmp)")
+    );
+
+    if (!filePath.isEmpty()) {
+        if (image_target.load(filePath)) {
+
+            QPixmap pixmap = QPixmap::fromImage(image_target);
+            QPixmap scaledPixmap = pixmap.scaled(targetImageLabel->maximumSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+            targetImageLabel->setPixmap(QPixmap::fromImage(image_target));
+            viewTargetLabel->setPixmap(scaledPixmap);
+
+            rotulo->setText("Target image loaded.");
+        } else {
+            rotulo->setText("Error: Failed to load target image.");
+        }
+    }
 }
 
 // Image processing functions =====================================================================
@@ -247,11 +306,11 @@ void MainWindow::mirrorImagey()
     rotulo->setText("Image mirrored!");
 }
 
-tuple<vector<int>,int,int> MainWindow::grayScaleImage()
+tuple<vector<int>,int,int> MainWindow::grayScaleImage(QImage& img_src, QImage& img_dst, QLabel *image_label)
 {
     vector <int> histogram(256, 0);
 
-    if (image_src.isNull()) {
+    if (img_src.isNull()) {
         rotulo->setText("Warning: No image loaded to convert to gray scale!");
         return {histogram,-1,-1};
     }
@@ -260,11 +319,11 @@ tuple<vector<int>,int,int> MainWindow::grayScaleImage()
     int max_gray = 255;
     int min_gray = 0;
     
-    p_src = image_src.bits();
-    p_dst = image_dst.bits();
+    p_src = img_src.bits();
+    p_dst = img_dst.bits();
 
-    for (int i = 0; i < image_src.height(); i++){
-        for (int j = 0; j < image_src.width(); j++){
+    for (int i = 0; i < img_src.height(); i++){
+        for (int j = 0; j < img_src.width(); j++){
             int gray = (int)(0.299 * p_src[2] + 0.587 * p_src[1] + 0.114 * p_src[0]);
             p_dst[0] = p_dst[1] = p_dst[2] = gray;
 
@@ -278,8 +337,8 @@ tuple<vector<int>,int,int> MainWindow::grayScaleImage()
         }
     }
 
-    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
-    image_src = image_dst;
+    image_label->setPixmap(QPixmap::fromImage(img_dst));
+    img_src = img_dst;
 
     rotulo->setText("Image converted to gray scale!");
 
@@ -301,7 +360,7 @@ void MainWindow::quantizationImage(int levels)
         return;
     }
 
-    auto [histogram, min_gray, max_gray] = grayScaleImage();
+    auto [histogram, min_gray, max_gray] = grayScaleImage(image_src, image_dst, dstImageLabel);
 
     int range_grays = max_gray - min_gray + 1;
 
@@ -339,7 +398,7 @@ void MainWindow::quantizationImage(int levels)
     rotulo->setText("Image quantized!");
 }
 
-void MainWindow::histogramImage()
+void MainWindow::histogramImage(QImage& img_src, QImage& img_dst, QLabel *image_label)
 {
     if (image_src.isNull()) {
         rotulo->setText("Warning: No image loaded to generate histogram!");
@@ -347,9 +406,9 @@ void MainWindow::histogramImage()
     }
 
     QImage img_before_gray = image_src;
-    auto [histogram, min_gray, max_gray] = grayScaleImage();
+    auto [histogram, min_gray, max_gray] = grayScaleImage(img_src, img_dst, image_label);
 
-    dstImageLabel->setPixmap(QPixmap::fromImage(img_before_gray));
+    image_label->setPixmap(QPixmap::fromImage(img_before_gray));
     image_src = img_before_gray;
 
     int max_value = *std::max_element(histogram.begin(), histogram.end());
@@ -509,6 +568,125 @@ void MainWindow::negativeImage()
     rotulo->setText("Image negative adjusted!");
 }
 
+void MainWindow::equalizationImage()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to equalize!");
+        return;
+    }
+
+    auto [histogram, min_gray, max_gray] = grayScaleImage(image_src, image_dst, dstImageLabel);
+
+    int total_pixels = image_src.width() * image_src.height();
+    vector<int> hist_cum(256, 0);
+
+    double alpha = 255.0 / total_pixels;
+
+    hist_cum[0] = histogram[0];
+
+    for (int i = 1; i < 256; i++) {
+        hist_cum[i] = hist_cum[i - 1] + histogram[i];
+    }
+
+    for (int i = 1; i < 256; i++) {
+        hist_cum[i] = static_cast<int>(hist_cum[i] * alpha);
+    }
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < image_src.height(); i++){
+        for (int j = 0; j < image_src.width(); j++){
+
+            int gray = (int)(0.299 * p_src[2] + 0.587 * p_src[1] + 0.114 * p_src[0]);
+            p_dst[0] = p_dst[1] = p_dst[2] = static_cast<unsigned char>(hist_cum[gray]);
+
+            p_src += 4;
+            p_dst += 4;
+        }
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image equalized!");
+}
+
+void MainWindow::matchingImage()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: Two images are required for matching!");
+        return;
+    }
+
+    if (image_target.isNull()) {
+        rotulo->setText("Warning: Two images are required for matching!");
+        return;
+    }
+
+    auto [hist_src, min_gray_src, max_gray_src] = grayScaleImage(image_src, image_dst, dstImageLabel);
+    auto [hist_target, min_gray_target, max_gray_target] = grayScaleImage(image_target, image_target, targetImageLabel);
+
+    vector<double> hist_cum_src(256, 0);
+    vector<double> hist_cum_target(256, 0);
+    vector<double> hm(256, 0);
+
+    hist_cum_src[0] = hist_src[0];
+    hist_cum_target[0] = hist_target[0];
+
+    for (int i = 1; i < 256; i++) {
+        hist_cum_src[i] = hist_cum_src[i - 1] + hist_src[i];
+        hist_cum_target[i] = hist_cum_target[i - 1] + hist_target[i];
+    }
+
+    int total_pixels_src = image_src.width() * image_src.height();
+    int total_pixels_target = image_target.width() * image_target.height();
+
+    for (int i = 1; i < 256; i++) {
+        hist_cum_src[i] = hist_cum_src[i]/total_pixels_src;
+        hist_cum_target[i] = hist_cum_target[i]/total_pixels_target;
+    }
+
+
+    for (int shade_level = 0; shade_level < 256; ++shade_level) {
+        double min_diff = abs(hist_cum_src[shade_level] - hist_cum_target[0]);
+        double closest = 0;
+        for (int target_level = 1; target_level < 256; ++target_level) {
+            double diff = abs(hist_cum_src[shade_level] - hist_cum_target[target_level]);
+            if (diff < min_diff) {
+                min_diff = diff;
+                closest = target_level;
+            }
+        }
+        hm[shade_level] = closest;
+    }
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < image_src.height(); i++){
+        for (int j = 0; j < image_src.width(); j++){
+    
+            double gray = (int)(0.299 * p_src[2] + 0.587 * p_src[1] + 0.114 * p_src[0]);
+            double matched_gray = hm[gray];
+            p_dst[0] = p_dst[1] = p_dst[2] = static_cast<unsigned char>(matched_gray);
+
+            p_src += 4;
+            p_dst += 4;
+        }
+    }
+
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Images matched!");
+
+}
 // Key event handlers ===============================================================================
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
