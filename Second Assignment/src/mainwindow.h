@@ -32,6 +32,9 @@ private slots:
     tuple<vector<int>,int,int> grayScaleImage();
     void quantizationImage(int levels);
     void histogramImage();
+    void brightnessImage(int brightness);
+    void contrastImage(double contrast);
+    void negativeImage();
 
 
 private:
@@ -39,6 +42,8 @@ private:
     //GUI components ===============================
     QLabel *rotulo;
     QLineEdit *quantizationLevel;
+    QLineEdit *brightnessLevel;
+    QLineEdit *contrastLevel;
     QPushButton *open;
     QPushButton *save;
     QPushButton *reset;
@@ -46,6 +51,9 @@ private:
     QPushButton *mirrorY;
     QPushButton *grayScale;
     QPushButton *quantization;
+    QPushButton *brightness;
+    QPushButton *contrast;
+    QPushButton *negative;
     QPushButton *histogram;
     QLabel *imageLabel;
     QLabel *srcImageLabel;

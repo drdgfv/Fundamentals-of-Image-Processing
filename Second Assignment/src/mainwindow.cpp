@@ -27,8 +27,16 @@ MainWindow::MainWindow(QWidget *parent)
     rotulo->setAlignment(Qt::AlignCenter);
 
     quantizationLevel = new QLineEdit(this);
-    quantizationLevel->setPlaceholderText("Q-Levels (2-256)");
-    quantizationLevel->setFixedWidth(150);
+    quantizationLevel->setPlaceholderText("Q-Levels [2-256]");
+    quantizationLevel->setFixedWidth(130);
+
+    brightnessLevel = new QLineEdit(this);
+    brightnessLevel->setPlaceholderText("B-level [-255,255]");
+    brightnessLevel->setFixedWidth(130);
+
+    contrastLevel = new QLineEdit(this);
+    contrastLevel->setPlaceholderText("C-level [0,255]");
+    contrastLevel->setFixedWidth(130);
 
     open = new QPushButton("Open", this);
     save = new QPushButton("Save", this);
@@ -39,6 +47,9 @@ MainWindow::MainWindow(QWidget *parent)
     grayScale = new QPushButton("Gray Scale", this);
     quantization = new QPushButton("Quantization", this);
     histogram = new QPushButton("Histogram", this);
+    brightness = new QPushButton("Brightness", this);
+    contrast = new QPushButton("Contrast", this);
+    negative = new QPushButton("Negative", this);
 
     image_original = QImage();
     image_src = QImage();
@@ -84,6 +95,11 @@ MainWindow::MainWindow(QWidget *parent)
     OperationsLayout->addWidget(grayScale);
     OperationsLayout->addWidget(quantization);
     OperationsLayout->addWidget(quantizationLevel);
+    OperationsLayout->addWidget(brightness);
+    OperationsLayout->addWidget(brightnessLevel);
+    OperationsLayout->addWidget(contrast);
+    OperationsLayout->addWidget(contrastLevel);
+    OperationsLayout->addWidget(negative);
     OperationsLayout->addWidget(histogram);
     OperationsLayout->addStretch();
     OperationsLayout->addWidget(reset);
@@ -106,8 +122,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mirrorY, &QPushButton::clicked, this, &MainWindow::mirrorImagey);
     connect(grayScale, &QPushButton::clicked, this, &MainWindow::grayScaleImage);
     connect(quantization, &QPushButton::clicked, this, &MainWindow::quantizationImage);
+    connect(brightness, &QPushButton::clicked, this, &MainWindow::brightnessImage);
+    connect(contrast, &QPushButton::clicked, this, &MainWindow::contrastImage);
+    connect(negative, &QPushButton::clicked, this, &MainWindow::negativeImage);
     connect(histogram, &QPushButton::clicked, this, &MainWindow::histogramImage);
     connect(reset, &QPushButton::clicked, this, &MainWindow::onReset);
+
 }
 
 // Destructor ======================================================================================
@@ -367,6 +387,8 @@ void MainWindow::histogramImage()
 
     QDialog *dialog = new QDialog(this);
     dialog->setWindowTitle("Histogram");
+    dialog->setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
+
 
     QVBoxLayout *layout = new QVBoxLayout(dialog);
     layout->addWidget(chartView);
@@ -375,6 +397,116 @@ void MainWindow::histogramImage()
     dialog->show();
 
     rotulo->setText("Histogram generated!");
+}
+
+void MainWindow::brightnessImage(int brightness)
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to adjust brightness!");
+        return;
+    }
+
+    brightness = brightnessLevel->text().toInt();
+
+    if (brightness < -255 || brightness > 255) {
+        rotulo->setText("Error: Brightness must be between -255 and 255.");
+        return;
+    }
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < image_src.height(); i++){
+        for (int j = 0; j < image_src.width(); j++){
+            int r = std::clamp(static_cast<int>(p_src[2]) + brightness, 0, 255);
+            int g = std::clamp(static_cast<int>(p_src[1]) + brightness, 0, 255);
+            int b = std::clamp(static_cast<int>(p_src[0]) + brightness, 0, 255);
+
+            p_dst[2] = static_cast<unsigned char>(r);
+            p_dst[1] = static_cast<unsigned char>(g);
+            p_dst[0] = static_cast<unsigned char>(b);
+
+            p_src += 4;
+            p_dst += 4;
+        }
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image brightness adjusted!");
+}
+
+void MainWindow::contrastImage(double contrast)
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to adjust contrast!");
+        return;
+    }
+
+    contrast = contrastLevel->text().toFloat();
+
+    if (contrast < 0 || contrast > 255) {
+        rotulo->setText("Error: Contrast must be between 0 and 255.");
+        return;
+    }
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < image_src.height(); i++){
+        for (int j = 0; j < image_src.width(); j++){
+            float r = std::clamp(static_cast<int>(p_src[2]) * contrast, 0.0, 255.0);
+            float g = std::clamp(static_cast<int>(p_src[1]) * contrast, 0.0, 255.0);
+            float b = std::clamp(static_cast<int>(p_src[0]) * contrast, 0.0, 255.0);
+
+            p_dst[2] = static_cast<unsigned char>(int(r));
+            p_dst[1] = static_cast<unsigned char>(int(g));
+            p_dst[0] = static_cast<unsigned char>(int(b));
+
+            p_src += 4;
+            p_dst += 4;
+        }
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image contrast adjusted!");
+}
+
+void MainWindow::negativeImage()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to adjust negative!");
+        return;
+    }
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < image_src.height(); i++){
+        for (int j = 0; j < image_src.width(); j++){
+
+            p_dst[2] = 255 - p_src[2];
+            p_dst[1] = 255 - p_src[1];
+            p_dst[0] = 255 - p_src[0];
+
+            p_src += 4;
+            p_dst += 4;
+        }
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image negative adjusted!");
 }
 
 // Key event handlers ===============================================================================
