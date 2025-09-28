@@ -68,6 +68,10 @@ MainWindow::MainWindow(QWidget *parent)
     zoomIn->setIcon(QIcon("images/zoom-in.png"));
     zoomOut = new QPushButton("", this);
     zoomOut->setIcon(QIcon("images/zoom-out.png"));
+    rotate_left = new QPushButton("", this);
+    rotate_left->setIcon(QIcon("images/rotate-ccw.png"));
+    rotate_right = new QPushButton("", this);
+    rotate_right->setIcon(QIcon("images/rotate-cw.png"));
 
 
     image_original = QImage();
@@ -141,6 +145,8 @@ MainWindow::MainWindow(QWidget *parent)
     OperationsLayout->addWidget(zoomOut);
     OperationsLayout->addWidget(zoomOutSx);
     OperationsLayout->addWidget(zoomOutSy);
+    OperationsLayout->addWidget(rotate_left);
+    OperationsLayout->addWidget(rotate_right);
     OperationsLayout->addStretch();
     OperationsLayout->addWidget(histogram);
     OperationsLayout->addWidget(reset);
@@ -180,6 +186,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(reset, &QPushButton::clicked, this, &MainWindow::onReset);
     connect(zoomIn, &QPushButton::clicked, this, &MainWindow::zoomInImage);
     connect(zoomOut, &QPushButton::clicked, this, &MainWindow::zoomOutImage);
+    connect(rotate_left, &QPushButton::clicked, this, &MainWindow::rotateLeftImage);
+    connect(rotate_right, &QPushButton::clicked, this, &MainWindow::rotateRightImage);
 }
 
 // Destructor ======================================================================================
@@ -842,6 +850,77 @@ void MainWindow::zoomInImage(){
 
     rotulo->setText("Image zoomed in!");
 }
+
+void MainWindow::rotateLeftImage()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to rotate!");
+        return;
+    }
+
+    int srcWidth = image_src.width();
+    int srcHeight = image_src.height();
+
+    image_dst = QImage(srcHeight, srcWidth, image_src.format()); 
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < srcHeight; i++){
+        for (int j = 0; j < srcWidth; j++ ){
+
+            unsigned char *p_current_src = p_src + (i * srcWidth * 4) + (j * 4);
+            unsigned char *p_current_dst = p_dst + ((srcWidth - 1 - j) * srcHeight * 4) + (i * 4);
+
+            p_current_dst[2] = p_current_src[2];
+            p_current_dst[1] = p_current_src[1];
+            p_current_dst[0] = p_current_src[0];
+        }
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image rotated left!");
+}
+
+void MainWindow::rotateRightImage()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to rotate!");
+        return;
+    }
+
+    int srcWidth = image_src.width();
+    int srcHeight = image_src.height();
+
+    image_dst = QImage(srcHeight, srcWidth, image_src.format()); 
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < srcHeight; i++){
+        for (int j = 0; j < srcWidth; j++ ){
+
+            unsigned char *p_current_src = p_src + (i * srcWidth * 4) + (j * 4);
+            unsigned char *p_current_dst = p_dst + (j * srcHeight * 4) + ((srcHeight - 1 - i) * 4);
+
+            p_current_dst[2] = p_current_src[2];
+            p_current_dst[1] = p_current_src[1];
+            p_current_dst[0] = p_current_src[0];
+        }
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image rotated right!");
+}
+
 // Key event handlers ===============================================================================
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {

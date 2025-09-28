@@ -40,6 +40,8 @@ private slots:
     void matchingImage();
     void zoomInImage();
     void zoomOutImage();
+    void rotateLeftImage();
+    void rotateRightImage();
 
 
 private:
@@ -70,6 +72,8 @@ private:
     QPushButton *histogram_target;
     QPushButton *zoomIn;
     QPushButton *zoomOut;
+    QPushButton *rotate_left;
+    QPushButton *rotate_right;
 
     QLabel *imageLabel;
     QLabel *srcImageLabel;
