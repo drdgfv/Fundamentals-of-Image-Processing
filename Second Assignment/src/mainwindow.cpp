@@ -29,16 +29,24 @@ MainWindow::MainWindow(QWidget *parent)
     rotulo->setStyleSheet("color: rgba(123, 126, 151, 1);");
 
     quantizationLevel = new QLineEdit(this);
-    quantizationLevel->setPlaceholderText("Q-Levels [2-256]");
-    quantizationLevel->setFixedWidth(130);
+    quantizationLevel->setPlaceholderText("[2-256]");
+    quantizationLevel->setFixedWidth(55);
 
     brightnessLevel = new QLineEdit(this);
-    brightnessLevel->setPlaceholderText("B-level [-255,255]");
-    brightnessLevel->setFixedWidth(130);
+    brightnessLevel->setPlaceholderText("[-255,255]");
+    brightnessLevel->setFixedWidth(75);
 
     contrastLevel = new QLineEdit(this);
-    contrastLevel->setPlaceholderText("C-level [0,255]");
-    contrastLevel->setFixedWidth(130);
+    contrastLevel->setPlaceholderText("[0,255]");
+    contrastLevel->setFixedWidth(55);
+
+    zoomOutSx = new QLineEdit(this);
+    zoomOutSx->setPlaceholderText("Sx");
+    zoomOutSx->setFixedWidth(20);
+
+    zoomOutSy = new QLineEdit(this);
+    zoomOutSy->setPlaceholderText("Sy");
+    zoomOutSy->setFixedWidth(20);
 
     open = new QPushButton("Open", this);
     select_target = new QPushButton("Select Target", this);
@@ -56,6 +64,11 @@ MainWindow::MainWindow(QWidget *parent)
     negative = new QPushButton("Negative", this);
     equalization = new QPushButton("Equalization", this);
     matching = new QPushButton("Matching", this);
+    zoomIn = new QPushButton("2x2", this);
+    zoomIn->setIcon(QIcon("images/zoom-in.png"));
+    zoomOut = new QPushButton("", this);
+    zoomOut->setIcon(QIcon("images/zoom-out.png"));
+
 
     image_original = QImage();
     image_src = QImage();
@@ -124,8 +137,12 @@ MainWindow::MainWindow(QWidget *parent)
     OperationsLayout->addWidget(negative);
     OperationsLayout->addWidget(equalization);
     OperationsLayout->addWidget(matching);
-    OperationsLayout->addWidget(histogram);
+    OperationsLayout->addWidget(zoomIn);
+    OperationsLayout->addWidget(zoomOut);
+    OperationsLayout->addWidget(zoomOutSx);
+    OperationsLayout->addWidget(zoomOutSy);
     OperationsLayout->addStretch();
+    OperationsLayout->addWidget(histogram);
     OperationsLayout->addWidget(reset);
     
     QVBoxLayout *mainLayout = new QVBoxLayout;
@@ -161,7 +178,8 @@ MainWindow::MainWindow(QWidget *parent)
     });
     connect(matching, &QPushButton::clicked, this, &MainWindow::matchingImage);
     connect(reset, &QPushButton::clicked, this, &MainWindow::onReset);
-
+    connect(zoomIn, &QPushButton::clicked, this, &MainWindow::zoomInImage);
+    connect(zoomOut, &QPushButton::clicked, this, &MainWindow::zoomOutImage);
 }
 
 // Destructor ======================================================================================
@@ -686,6 +704,143 @@ void MainWindow::matchingImage()
 
     rotulo->setText("Images matched!");
 
+}
+
+void MainWindow::zoomOutImage(){
+
+    auto [sx,sy] = make_pair(zoomOutSx->text().toInt(), zoomOutSy->text().toInt());
+
+    int srcWidth = image_src.width();
+    int srcHeight = image_src.height();
+
+    if(sx == 0 || sy == 0) {
+        rotulo->setText("Error: Sx and Sy are undefiened.");
+        return;
+    }
+
+    int dstWidth = (srcWidth + sx - 1) / sx;
+    int dstHeight = (srcHeight + sy - 1) / sy;
+
+    image_dst = QImage(dstWidth, dstHeight, image_src.format()); 
+
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to zoom out!");
+        return;
+    }
+
+    unsigned char *p_src, *p_dst;
+
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < dstHeight; i++){
+        for (int j = 0; j < dstWidth; j++ ){
+
+            int r=0, g=0, b=0, pixels=0, av_r=0, av_g=0, av_b=0;
+            int srcStartX = j * sx;
+            int srcStartY = i * sy;
+
+            for (int y = srcStartY; y<srcStartY+sy && y<srcHeight; y++){
+                for (int x = srcStartX; x<srcStartX+sx && x<srcWidth; x++){
+
+                    const unsigned char *p_current_src = p_src + (y * image_src.width() * 4) + (x * 4);
+
+                    r += p_current_src[2];
+                    g += p_current_src[1];
+                    b += p_current_src[0];
+                    pixels++;
+                }
+            }
+
+
+            if(pixels!=0){
+                av_r = r/pixels;
+                av_g = g/pixels;
+                av_b = b/pixels;
+            }
+
+            p_dst[2] = static_cast<unsigned char>(av_r);
+            p_dst[1] = static_cast<unsigned char>(av_g);
+            p_dst[0] = static_cast<unsigned char>(av_b);
+
+            p_dst += 4;
+        }
+    }
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image zoomed out!");
+}
+
+void MainWindow::zoomInImage(){
+    
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to zoom in!");
+        return;
+    }
+    
+    int srcWidth = image_src.width();
+    int srcHeight = image_src.height();
+
+    image_dst = QImage(srcWidth+srcWidth-1, srcHeight+srcHeight-1, image_src.format());
+    
+    int dstWidth = image_dst.width();
+    int dstHeight = image_dst.height();
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < srcHeight; i++){
+        for (int j = 0; j < srcWidth; j++){
+
+            unsigned char *p_dst_row = p_dst + (i * 2) * dstWidth * 4 + (j * 2) * 4;
+
+            p_dst_row[2] = p_src[2];
+            p_dst_row[1] = p_src[1];
+            p_dst_row[0] = p_src[0];
+
+            p_src+=4;
+        }
+    }
+
+    p_dst = image_dst.bits();
+
+    for (int i = 0; i < dstHeight; i+=2){
+        for (int j = 1; j<dstWidth; j+=2){
+
+            unsigned char *p_current_dst = p_dst + i * dstWidth * 4 + j * 4;
+            unsigned char *p_left_dst = p_current_dst - 4;
+            unsigned char *p_right_dst = p_current_dst + 4;
+
+            p_current_dst[2] = (p_left_dst[2] + p_right_dst[2]) * 0.5;
+            p_current_dst[1] = (p_left_dst[1] + p_right_dst[1]) * 0.5;
+            p_current_dst[0] = (p_left_dst[0] + p_right_dst[0]) * 0.5;
+        }
+    }
+
+    p_dst = image_dst.bits();
+
+    for (int i = 1; i < dstHeight-1; i+=2){
+        for (int j = 0; j < dstWidth; j++){
+
+            unsigned char *p_current_dst = p_dst + i * dstWidth * 4 + j * 4;
+            unsigned char *p_above_dst = p_current_dst - dstWidth * 4;
+            unsigned char *p_below_dst = p_current_dst + dstWidth * 4;
+
+            p_current_dst[2] = (p_above_dst[2] + p_below_dst[2]) * 0.5;
+            p_current_dst[1] = (p_above_dst[1] + p_below_dst[1]) * 0.5;
+            p_current_dst[0] = (p_above_dst[0] + p_below_dst[0]) * 0.5;
+        }
+    }
+
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Image zoomed in!");
 }
 // Key event handlers ===============================================================================
 void MainWindow::keyPressEvent(QKeyEvent *event)

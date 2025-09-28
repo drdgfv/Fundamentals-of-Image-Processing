@@ -38,15 +38,21 @@ private slots:
     void negativeImage();
     void equalizationImage();
     void matchingImage();
+    void zoomInImage();
+    void zoomOutImage();
 
 
 private:
 
     //GUI components ===============================
     QLabel *rotulo;
+
     QLineEdit *quantizationLevel;
     QLineEdit *brightnessLevel;
     QLineEdit *contrastLevel;
+    QLineEdit *zoomOutSx;
+    QLineEdit *zoomOutSy;
+
     QPushButton *open;
     QPushButton *select_target;
     QPushButton *save;
@@ -62,6 +68,9 @@ private:
     QPushButton *matching;
     QPushButton *histogram;
     QPushButton *histogram_target;
+    QPushButton *zoomIn;
+    QPushButton *zoomOut;
+
     QLabel *imageLabel;
     QLabel *srcImageLabel;
     QLabel *dstImageLabel;
@@ -72,6 +81,7 @@ private:
     QImage image_dst;
     QImage image_target;
     QImage view_target;
+
     QString fileName;
 
 protected:

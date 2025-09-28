@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
     "    border: none;"
     "    padding: 8px 16px;"
     "    border-radius: 4px;"
+    "    font-size: 16px;"
     "}"
     "QPushButton:hover {" // Estilo quando o mouse está sobre o botão
     "    background-color: #035d96ff;"
