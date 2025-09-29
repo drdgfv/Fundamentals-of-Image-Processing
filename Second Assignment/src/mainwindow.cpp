@@ -1213,6 +1213,7 @@ void MainWindow::highPassKernel()
     grayScale->click();
     operation = "High Pass";
 }
+
 // Key event handlers ===============================================================================
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
