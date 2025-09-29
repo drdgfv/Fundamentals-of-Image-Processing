@@ -191,12 +191,12 @@ Illustration 16: Image after applying a Gaussian filter 10 times.
 
 <table>
   <tr> 
-    <td>  </td>
-    <td> </td>
+    <td> ![dst_Space_187k](https://github.com/user-attachments/assets/1e759b0d-194d-4d13-b2f3-a8ce93b1bc16) </td>
+    <td> ![dst_Gramado_72k](https://github.com/user-attachments/assets/e2ffdb9d-626e-4b9a-aa49-a80d537d50b0) </td>
   </tr> 
   <tr>
-   <td> </td>
-   <td> </td>
+   <td> ![dst_Underwater_53k](https://github.com/user-attachments/assets/1d2b5cac-d069-482d-b9d5-7f54b88d9685) </td>
+   <td> ![dst_rdj](https://github.com/user-attachments/assets/e9b19015-0569-4bff-b2a5-63187a4aa474) </td>
   </tr>
 </table>
 Illustration 17: Results of image convolution with the generic high-pass, Laplacian, Prewitt Hy, and Sobel Hx filters, respectively.
