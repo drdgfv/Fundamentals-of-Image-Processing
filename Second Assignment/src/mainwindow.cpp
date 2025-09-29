@@ -16,6 +16,8 @@
 
 using namespace std;
 
+double clamping;
+string operation;
 
 // Constructor =====================================================================================
 MainWindow::MainWindow(QWidget *parent)
@@ -48,6 +50,25 @@ MainWindow::MainWindow(QWidget *parent)
     zoomOutSy->setPlaceholderText("Sy");
     zoomOutSy->setFixedWidth(20);
 
+    k00 = new QLineEdit(this);
+    k00->setFixedWidth(40);
+    k01 = new QLineEdit(this);
+    k01->setFixedWidth(40);
+    k02 = new QLineEdit(this);
+    k02->setFixedWidth(40);
+    k10 = new QLineEdit(this);
+    k10->setFixedWidth(40);
+    k11 = new QLineEdit(this);
+    k11->setFixedWidth(40);
+    k12 = new QLineEdit(this);
+    k12->setFixedWidth(40);
+    k20 = new QLineEdit(this);
+    k20->setFixedWidth(40);
+    k21 = new QLineEdit(this);
+    k21->setFixedWidth(40);
+    k22 = new QLineEdit(this);
+    k22->setFixedWidth(40);
+
     open = new QPushButton("Open", this);
     select_target = new QPushButton("Select Target", this);
     save = new QPushButton("Save", this);
@@ -64,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
     negative = new QPushButton("Negative", this);
     equalization = new QPushButton("Equalization", this);
     matching = new QPushButton("Matching", this);
-    zoomIn = new QPushButton("2x2", this);
+    zoomIn = new QPushButton("", this);
     zoomIn->setIcon(QIcon("images/zoom-in.png"));
     zoomOut = new QPushButton("", this);
     zoomOut->setIcon(QIcon("images/zoom-out.png"));
@@ -72,7 +93,14 @@ MainWindow::MainWindow(QWidget *parent)
     rotate_left->setIcon(QIcon("images/rotate-ccw.png"));
     rotate_right = new QPushButton("", this);
     rotate_right->setIcon(QIcon("images/rotate-cw.png"));
-
+    convolution = new QPushButton("Convolution", this); 
+    gaussian = new QPushButton("Gaussian", this);
+    sobelHx = new QPushButton("Sobel Hx", this);
+    sobelHy = new QPushButton("Sobel Hy", this);
+    laplacian = new QPushButton("Laplacian", this);
+    prewittHx = new QPushButton("Prewitt Hx", this);
+    prewittHy = new QPushButton("Prewitt Hy", this);
+    highPass = new QPushButton("High Pass", this);
 
     image_original = QImage();
     image_src = QImage();
@@ -105,6 +133,7 @@ MainWindow::MainWindow(QWidget *parent)
     topLayout->addWidget(save);
     topLayout->addWidget(rotulo);
     topLayout->addStretch(); 
+    topLayout->addStretch();
     topLayout->addWidget(select_target);
     topLayout->addWidget(histogram_target);
 
@@ -123,10 +152,78 @@ MainWindow::MainWindow(QWidget *parent)
     targetArea->setWidgetResizable(true);
     targetArea->setFixedSize(230, 200);
 
+    QHBoxLayout *targetLayout = new QHBoxLayout;
+    targetLayout->addStretch();
+    targetLayout->addWidget(targetArea);
+    targetLayout->addStretch();
+
+    QHBoxLayout *kernelLayout0 = new QHBoxLayout;
+    kernelLayout0->addWidget(k00);
+    kernelLayout0->addWidget(k01);
+    kernelLayout0->addWidget(k02);
+
+    QHBoxLayout *kernelLayout1 = new QHBoxLayout;   
+    kernelLayout1->addWidget(k10);
+    kernelLayout1->addWidget(k11);
+    kernelLayout1->addWidget(k12);
+
+    QHBoxLayout *kernelLayout2 = new QHBoxLayout;
+    kernelLayout2->addWidget(k20);
+    kernelLayout2->addWidget(k21);
+    kernelLayout2->addWidget(k22);
+
+    QVBoxLayout *kernelLayout = new QVBoxLayout;
+    kernelLayout->addWidget(new QLabel("Kernel:"));
+    kernelLayout->addLayout(kernelLayout0);
+    kernelLayout->addLayout(kernelLayout1);
+    kernelLayout->addLayout(kernelLayout2);
+
+    QWidget *kernelWidget = new QWidget;
+    kernelWidget->setLayout(kernelLayout);
+    kernelWidget->setFixedWidth(150);
+    kernelWidget->setFixedHeight(120);
+
+    QHBoxLayout *kernelBoxLayout = new QHBoxLayout;
+    kernelBoxLayout->addStretch();
+    kernelBoxLayout->addWidget(kernelWidget);
+    kernelBoxLayout->addStretch();
+
+    QVBoxLayout *midLayout = new QVBoxLayout;
+    midLayout->addLayout(kernelBoxLayout);
+    midLayout->addWidget(gaussian);
+    midLayout->addWidget(laplacian);
+    midLayout->addWidget(highPass);
+    midLayout->addWidget(sobelHx);
+    midLayout->addWidget(sobelHy);
+    midLayout->addWidget(prewittHx);
+    midLayout->addWidget(prewittHy);
+    midLayout->addLayout(targetLayout);
+    targetArea->setToolTip("Target Image for Histogram Matching");
+
+    QVBoxLayout *rightLayout = new QVBoxLayout;
+    rightLayout->addWidget(zoomIn);
+    zoomIn->setToolTip("Zoom In of 2x2");
+    rightLayout->addWidget(zoomOut);
+    zoomOut->setToolTip("Zoom Out of Sx and Sy - Select below");
+    rightLayout->addWidget(zoomOutSx);
+    zoomOutSx->setToolTip("Zoom Out Scale in X");
+    rightLayout->addWidget(zoomOutSy);
+    zoomOutSy->setToolTip("Zoom Out Scale in Y");
+    rightLayout->addWidget(rotate_left);
+    rotate_left->setToolTip("Rotate Left 90 degrees");
+    rightLayout->addWidget(rotate_right);
+    rotate_right->setToolTip("Rotate Right 90 degrees");
+
+    QWidget *rightWidget = new QWidget;
+    rightWidget->setLayout(rightLayout);
+    rightWidget->setFixedWidth(40);
+    rightWidget->setFixedHeight(250);
+
     QHBoxLayout *imagesLayout = new QHBoxLayout;
     imagesLayout->addWidget(srcScrollArea);
-    imagesLayout->addWidget(targetArea);
+    imagesLayout->addLayout(midLayout);
     imagesLayout->addWidget(dstScrollArea);
+    imagesLayout->addWidget(rightWidget);
 
     QHBoxLayout *OperationsLayout = new QHBoxLayout;
     OperationsLayout->addWidget(mirrorX);
@@ -141,12 +238,7 @@ MainWindow::MainWindow(QWidget *parent)
     OperationsLayout->addWidget(negative);
     OperationsLayout->addWidget(equalization);
     OperationsLayout->addWidget(matching);
-    OperationsLayout->addWidget(zoomIn);
-    OperationsLayout->addWidget(zoomOut);
-    OperationsLayout->addWidget(zoomOutSx);
-    OperationsLayout->addWidget(zoomOutSy);
-    OperationsLayout->addWidget(rotate_left);
-    OperationsLayout->addWidget(rotate_right);
+    OperationsLayout->addWidget(convolution);
     OperationsLayout->addStretch();
     OperationsLayout->addWidget(histogram);
     OperationsLayout->addWidget(reset);
@@ -157,7 +249,6 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addLayout(imagesLayout);
     mainLayout->addStretch();
     mainLayout->addLayout(OperationsLayout);
-    
 
     QWidget *widgetCentral = new QWidget();
     widgetCentral->setLayout(mainLayout);
@@ -188,6 +279,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(zoomOut, &QPushButton::clicked, this, &MainWindow::zoomOutImage);
     connect(rotate_left, &QPushButton::clicked, this, &MainWindow::rotateLeftImage);
     connect(rotate_right, &QPushButton::clicked, this, &MainWindow::rotateRightImage);
+    connect(convolution, &QPushButton::clicked, this, &MainWindow::convolutionImage);
+    connect(gaussian, &QPushButton::clicked, this, &MainWindow::gaussianKernel);
+    connect(sobelHx, &QPushButton::clicked, this, &MainWindow::sobelHxKernel);
+    connect(sobelHy, &QPushButton::clicked, this, &MainWindow::sobelHyKernel);
+    connect(laplacian, &QPushButton::clicked, this, &MainWindow::laplacianKernel);
+    connect(prewittHx, &QPushButton::clicked, this, &MainWindow::prewittHxKernel);
+    connect(prewittHy, &QPushButton::clicked, this, &MainWindow::prewittHyKernel);
+    connect(highPass, &QPushButton::clicked, this, &MainWindow::highPassKernel);
 }
 
 // Destructor ======================================================================================
@@ -921,6 +1020,199 @@ void MainWindow::rotateRightImage()
     rotulo->setText("Image rotated right!");
 }
 
+void MainWindow::convolutionImage()
+{
+    if (image_src.isNull()) {
+        rotulo->setText("Warning: No image loaded to apply convolution!");
+        return;
+    }
+
+    double a00 = k00->text().toDouble();
+    double a01 = k01->text().toDouble();
+    double a02 = k02->text().toDouble();
+    double a10 = k10->text().toDouble();
+    double a11 = k11->text().toDouble();
+    double a12 = k12->text().toDouble();
+    double a20 = k20->text().toDouble();
+    double a21 = k21->text().toDouble();
+    double a22 = k22->text().toDouble(); 
+
+    if (a00 == 0 && a01 == 0 && a02 == 0 && a10 == 0 && a11 == 0 && a12 == 0 && a20 == 0 && a21 == 0 && a22 == 0) {
+        rotulo->setText("Error: Kernel values cannot all be zero.");
+        return;
+    }
+
+    if(operation == "Sobel" || operation == "Laplacian" || operation == "Prewitt" || operation == "High Pass"){
+        grayScale->click();
+    }
+
+    vector<vector<double>> kernel = {
+        {a22, a21, a20},
+        {a12, a11, a10},
+        {a02, a01, a00}
+    };
+
+    int kernelSize = kernel.size();
+
+    int srcWidth = image_src.width();
+    int srcHeight = image_src.height();
+
+    unsigned char *p_src, *p_dst;
+    
+    p_src = image_src.bits();
+    p_dst = image_dst.bits();
+
+
+    int n2 = kernelSize / 2;
+
+    for (int y = n2; y<=srcHeight - n2; y++){
+        for (int x = n2; x<= srcWidth - n2; x++){
+
+            double r=0, g=0, b=0;
+
+            for (int k = -n2; k <= n2; k++){
+                for (int j = -n2; j <= n2; j++){
+
+                    unsigned char *p_current_src = p_src + ((y + k) * srcWidth * 4) + ((x + j) * 4);
+
+                    r += p_current_src[2] * kernel[k + n2][j + n2];
+                    g += p_current_src[1] * kernel[k + n2][j + n2];
+                    b += p_current_src[0] * kernel[k + n2][j + n2];
+                }
+            }
+
+            p_dst[(y * srcWidth + x) * 4 + 2] = uint8_t(max(0.0, min(255.0, r+clamping*127)));
+            p_dst[(y * srcWidth + x) * 4 + 1] = uint8_t(max(0.0, min(255.0, g+clamping*127)));
+            p_dst[(y * srcWidth + x) * 4 + 0] = uint8_t(max(0.0, min(255.0, b+clamping*127)));
+        }
+    }
+
+
+    dstImageLabel->setPixmap(QPixmap::fromImage(image_dst));
+    image_src = image_dst;
+
+    rotulo->setText("Convolution applied to image!");
+}
+
+void MainWindow::gaussianKernel()
+{
+    k00->setText("0.0625");
+    k01->setText("0.125");
+    k02->setText("0.0625");
+    k10->setText("0.125");
+    k11->setText("0.25");
+    k12->setText("0.125");
+    k20->setText("0.0625");
+    k21->setText("0.125");
+    k22->setText("0.0625");
+
+    clamping = 0.0;
+    operation = "Gaussian";
+}
+
+void MainWindow::sobelHxKernel()
+{
+    k00->setText("1");
+    k01->setText("0");
+    k02->setText("-1");
+    k10->setText("2");
+    k11->setText("0");
+    k12->setText("-2");
+    k20->setText("1");
+    k21->setText("0");
+    k22->setText("-1");
+
+    clamping = 1.0;
+    grayScale->click();
+    operation = "Sobel";
+}
+
+void MainWindow::sobelHyKernel()
+{
+    k00->setText("1");
+    k01->setText("2");
+    k02->setText("1");
+    k10->setText("0");
+    k11->setText("0");
+    k12->setText("0");
+    k20->setText("-1");
+    k21->setText("-2");
+    k22->setText("-1");
+
+    clamping = 1.0;
+    grayScale->click();
+    operation = "Sobel";
+}
+
+void MainWindow::laplacianKernel()
+{
+    k00->setText("0");
+    k01->setText("-1");
+    k02->setText("0");
+    k10->setText("-1");
+    k11->setText("4");
+    k12->setText("-1");
+    k20->setText("0");
+    k21->setText("-1");
+    k22->setText("0");
+
+    clamping = 0.0;
+    grayScale->click();
+    operation = "Laplacian";
+}
+
+void MainWindow::prewittHxKernel()
+{
+    k00->setText("1");
+    k01->setText("0");
+    k02->setText("-1");
+    k10->setText("1");
+    k11->setText("0");
+    k12->setText("-1");
+    k20->setText("1");
+    k21->setText("0");
+    k22->setText("-1");
+
+    clamping = 1.0;
+
+    grayScale->click();
+    operation = "Prewitt";
+}
+
+void MainWindow::prewittHyKernel()
+{
+    k00->setText("1");
+    k01->setText("1");
+    k02->setText("1");
+    k10->setText("0");
+    k11->setText("0");
+    k12->setText("0");
+    k20->setText("-1");
+    k21->setText("-1");
+    k22->setText("-1");
+
+    clamping = 1.0;
+    grayScale->click();
+    operation = "Prewitt";
+}
+
+void MainWindow::highPassKernel()
+{
+    k00->setText("-1");
+    k01->setText("-1");
+    k02->setText("-1");
+    k10->setText("-1");
+    k11->setText("8");
+    k12->setText("-1");
+    k20->setText("-1");
+    k21->setText("-1");
+    k22->setText("-1");
+
+    clamping = 0.0;
+
+    grayScale->click();
+    operation = "High Pass";
+}
 // Key event handlers ===============================================================================
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {

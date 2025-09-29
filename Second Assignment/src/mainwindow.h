@@ -42,7 +42,14 @@ private slots:
     void zoomOutImage();
     void rotateLeftImage();
     void rotateRightImage();
-
+    void convolutionImage();
+    void gaussianKernel();
+    void laplacianKernel();
+    void sobelHxKernel();
+    void sobelHyKernel();
+    void prewittHxKernel();
+    void prewittHyKernel();
+    void highPassKernel();
 
 private:
 
@@ -54,6 +61,15 @@ private:
     QLineEdit *contrastLevel;
     QLineEdit *zoomOutSx;
     QLineEdit *zoomOutSy;
+    QLineEdit *k00;
+    QLineEdit *k01;
+    QLineEdit *k02;
+    QLineEdit *k10;
+    QLineEdit *k11;
+    QLineEdit *k12;
+    QLineEdit *k20;
+    QLineEdit *k21;
+    QLineEdit *k22;
 
     QPushButton *open;
     QPushButton *select_target;
@@ -74,6 +90,15 @@ private:
     QPushButton *zoomOut;
     QPushButton *rotate_left;
     QPushButton *rotate_right;
+    QPushButton *convolution;
+    QPushButton *gaussian;
+    QPushButton *laplacian;
+    QPushButton *sobelHx;
+    QPushButton *sobelHy;
+    QPushButton *prewittHx;
+    QPushButton *prewittHy;
+    QPushButton *highPass;
+
 
     QLabel *imageLabel;
     QLabel *srcImageLabel;
