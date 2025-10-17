@@ -13,6 +13,8 @@
 #include <QtCharts/QBarSet>
 #include <QtCharts/QBarCategoryAxis>
 #include <QtCharts/QValueAxis>
+#include <opencv2/opencv.hpp>
+using namespace cv; 
 
 using namespace std;
 
@@ -101,6 +103,12 @@ MainWindow::MainWindow(QWidget *parent)
     prewittHx = new QPushButton("Prewitt Hx", this);
     prewittHy = new QPushButton("Prewitt Hy", this);
     highPass = new QPushButton("High Pass", this);
+    cameraOn = new QPushButton("", this);
+    cameraOn->setIcon(QIcon("assets/camera.png"));
+    cameraOff = new QPushButton("", this);
+    cameraOff->setIcon(QIcon("assets/camera-off.png"));
+    record = new QPushButton("",this);
+    record->setIcon(QIcon("assets/video"));
 
     image_original = QImage();
     image_src = QImage();
@@ -201,6 +209,13 @@ MainWindow::MainWindow(QWidget *parent)
     targetArea->setToolTip("Target Image for Histogram Matching");
 
     QVBoxLayout *rightLayout = new QVBoxLayout;
+    rightLayout->addWidget(cameraOn);
+    cameraOn->setToolTip("Turn Camera On");
+    rightLayout->addWidget(cameraOff);
+    cameraOff->setToolTip("Turn Camera Off");
+    cameraOff->hide();
+    rightLayout->addWidget(record);
+    record->setToolTip("Start recording this video");
     rightLayout->addWidget(zoomIn);
     zoomIn->setToolTip("Zoom In of 2x2");
     rightLayout->addWidget(zoomOut);
@@ -287,6 +302,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(prewittHx, &QPushButton::clicked, this, &MainWindow::prewittHxKernel);
     connect(prewittHy, &QPushButton::clicked, this, &MainWindow::prewittHyKernel);
     connect(highPass, &QPushButton::clicked, this, &MainWindow::highPassKernel);
+    connect(cameraOn, &QPushButton::clicked, this, &MainWindow::onCameraOn);
+    connect(cameraOff, &QPushButton::clicked, this, &MainWindow::onCameraOff);
+    connect(record, &QPushButton::clicked, this, &MainWindow::onRecord);
 }
 
 // Destructor ======================================================================================
@@ -377,6 +395,23 @@ void MainWindow::onSelectTarget()
             rotulo->setText("Error: Failed to load target image.");
         }
     }
+}
+
+
+void MainWindow::onCameraOn()
+{
+    cameraOn->hide();
+    cameraOff->show();
+}
+
+void MainWindow::onCameraOff()
+{
+    cameraOff->hide();
+    cameraOn->show();
+}
+
+void MainWindow::onRecord()
+{
 }
 
 // Image processing functions =====================================================================

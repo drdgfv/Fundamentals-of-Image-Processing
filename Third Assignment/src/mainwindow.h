@@ -26,6 +26,9 @@ private slots:
     void onSelectTarget();
     void onSave();
     void onReset();
+    void onCameraOn();
+    void onCameraOff();
+    void onRecord();
 
     //Image processing functions handlers =======================
     void mirrorImageX();
@@ -98,7 +101,9 @@ private:
     QPushButton *prewittHx;
     QPushButton *prewittHy;
     QPushButton *highPass;
-
+    QPushButton *cameraOn;
+    QPushButton *cameraOff;
+    QPushButton *record;
 
     QLabel *imageLabel;
     QLabel *srcImageLabel;
