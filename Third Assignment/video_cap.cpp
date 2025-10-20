@@ -13,6 +13,7 @@ void optionsHeader(){
     cout << "R or r : Brightness Enhancement" << endl;
     cout << "T or t : Contrast Enhancement" << endl;
     cout << "N or n : Negative" << endl;
+    cout << "G or g : Gay Scale" << endl;
     cout << "C or c : Clear all operations" << endl;
     cout << "Backspace : Undo the last operation" << endl;
 }
@@ -46,6 +47,10 @@ int operations(Mat src, Mat cpy, vector<int>& operations, int size, int brightne
             case 'n':
             case 'N':
                 cpy.convertTo(cpy, -1, -1, 255);
+                break;
+            case 'g':
+            case 'G':
+                grayScale(cpy);
                 break;
             case 'c':
             case 'C':
@@ -83,4 +88,10 @@ void gradient(Mat cpy){
     Sobel(gray_cpy, sobel_gradient, CV_16S, 1,0); 
     sobel_gradient.convertTo(cpy, CV_8U, 1, 127); 
 
+}
+
+void grayScale(Mat cpy){
+    Mat gray_cpy;     
+    cvtColor(cpy, gray_cpy, COLOR_BGR2GRAY);  
+    cvtColor(gray_cpy, cpy, COLOR_GRAY2BGR);
 }
