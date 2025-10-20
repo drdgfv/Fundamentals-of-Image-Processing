@@ -1,9 +1,12 @@
 #include <opencv2/opencv.hpp>
 #include "video_cap.h"
+#include <bits/stdc++.h>
+
 using namespace cv;
+using namespace std;
 
 int trackbar_value = 0;
-int trackbar_max_value = 50;
+int trackbar_max_value = 100;
 
 void on_trackbar(int pos, void* userdata) {
     trackbar_value = pos;
@@ -12,8 +15,10 @@ void on_trackbar(int pos, void* userdata) {
 int main(int argc, char** argv)
 {
 
-    int camera = 0;
-    int operation = 0, pressed_key;
+    int camera = 0, pressed_key;
+    vector<int> operations_array; //oerations array to cumulative operations;
+    unordered_set <char> possible_operations = {'C','c','B','b',27,8}; //the set of possible operations
+
     VideoCapture src_cap;
     VideoCapture cpy_cap;
 
@@ -25,8 +30,6 @@ int main(int argc, char** argv)
 
     optionsHeader();
 
-    // open the default camera, use something different from 0 otherwise;
-    // Check VideoCapture documentation.
     if(!src_cap.open(camera)) return 0;
     for(;;)
     {
@@ -37,23 +40,23 @@ int main(int argc, char** argv)
         src_cap >> src_frame;
         cpy_cap >> cpy_frame;
         
-        if( src_frame.empty() ) break; // end of video stream
+        if( src_frame.empty() ) break;
         
         pressed_key = waitKey(1);
 
-        if (pressed_key != -1) operation = pressed_key; // update operation every key_pressed, and persist the last operation.
+        // update operations_array if the key pressed is one of the possible operations
+        if (possible_operations.find(pressed_key) != possible_operations.end()) operations_array.push_back(pressed_key);
 
         int kernel_size = (trackbar_value * 2) + 1;
 
-        if(operations(src_frame, cpy_frame, operation, kernel_size)) break; // do operation, if not a ESC.
+        if(operations(src_frame, cpy_frame, operations_array, kernel_size)) break; // do operation, an ESC returns 1, so the videos end.
         
         imshow("Source Capture", src_frame);
         imshow("Copy Capture", cpy_frame);
-
-        
+  
     }
 
-    src_cap.release(); // release the VideoCapture object
-    cpy_cap.release(); // release the VideoCapture object
+    src_cap.release();
+    cpy_cap.release(); 
     return 0;
 }
