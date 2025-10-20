@@ -14,11 +14,14 @@ void optionsHeader(){
     cout << "T or t : Contrast Enhancement" << endl;
     cout << "N or n : Negative" << endl;
     cout << "G or g : Gay Scale" << endl;
+    cout << "Z or z : Resize in 1/4 both dimensions" << endl;
+    cout << "L or l : Resize in 1/4 both dimensions" << endl;
+    cout << "H or h : Flip horizontal" << endl;
     cout << "C or c : Clear all operations" << endl;
     cout << "Backspace : Undo the last operation" << endl;
 }
 
-int operations(Mat src, Mat cpy, vector<int>& operations, int size, int brightness, float contrast){
+int operations(Mat& src, Mat& cpy, vector<int>& operations, int size, int brightness, float contrast){
 
     for(auto operation : operations){
 
@@ -51,6 +54,18 @@ int operations(Mat src, Mat cpy, vector<int>& operations, int size, int brightne
             case 'g':
             case 'G':
                 grayScale(cpy);
+                break;
+            case 'z':
+            case 'Z':
+                resize(cpy, cpy, Size(0,0), 0.5, 0.5, INTER_AREA);
+                break;
+            case 'l':
+            case 'L':
+                rotate(cpy, cpy, ROTATE_90_CLOCKWISE);
+                break;
+            case 'h':
+            case 'H':
+                flip(cpy,cpy,1);
                 break;
             case 'c':
             case 'C':

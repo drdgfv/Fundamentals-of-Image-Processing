@@ -30,7 +30,19 @@ int main(int argc, char** argv)
 
     int camera = 0, pressed_key;
     vector<int> operations_array; //oerations array to cumulative operations;
-    unordered_set <char> possible_operations = {'C','c','B','b','S','s','R','r','E','e','T','t','N','n','G','g',27,8}; //the set of possible operations
+    unordered_set <char> possible_operations = {'C','c', //the set of possible operations
+                                                'B','b',
+                                                'S','s',
+                                                'R','r',
+                                                'E','e',
+                                                'T','t',
+                                                'N','n',
+                                                'G','g',
+                                                'Z','z', 
+                                                'L','l',
+                                                'H','h',
+                                                27,
+                                                8}; 
 
     VideoCapture src_cap;
     VideoCapture cpy_cap;
@@ -66,12 +78,14 @@ int main(int argc, char** argv)
         // update operations_array if the key pressed is one of the possible operations
         if (possible_operations.find(pressed_key) != possible_operations.end()) operations_array.push_back(pressed_key);
 
-        int kernel_size = (trackbar_value * 2) + 1;
+        // for(auto operation : operations_array) cout<< operation << endl;
+
+        int kernel_size = (trackbar_value * 2) + 1; 
         int brightness = brightness_level - 50;
         float contrast = (contrast_level + 1)/10;
 
         if(operations(src_frame, cpy_frame, operations_array, kernel_size, brightness, contrast)) break; // do operation, an ESC returns 1, so the videos end.
-        
+
         imshow("Source Capture", src_frame);
         imshow("Copy Capture", cpy_frame);
   
