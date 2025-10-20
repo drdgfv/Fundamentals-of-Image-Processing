@@ -5,19 +5,32 @@
 using namespace cv;
 using namespace std;
 
+int brightness_level = 0;
+int max_brightness_level = 150;
+float contrast_level = 0;
+float max_contrast_level = 20;
 int trackbar_value = 0;
 int trackbar_max_value = 100;
 
-void on_trackbar(int pos, void* userdata) {
+void on_blur_trackbar(int pos, void* userdata) {
     trackbar_value = pos;
 }
+
+void on_bright_trackbar(int pos, void* userdata) {
+    brightness_level = pos;
+}
+
+void on_contrast_trackbar(int pos, void* userdata) {
+    contrast_level = pos;
+}   
+
 
 int main(int argc, char** argv)
 {
 
     int camera = 0, pressed_key;
     vector<int> operations_array; //oerations array to cumulative operations;
-    unordered_set <char> possible_operations = {'C','c','B','b','S','s',27,8}; //the set of possible operations
+    unordered_set <char> possible_operations = {'C','c','B','b','S','s','R','r','E','e','T','t','N','n',27,8}; //the set of possible operations
 
     VideoCapture src_cap;
     VideoCapture cpy_cap;
@@ -25,8 +38,14 @@ int main(int argc, char** argv)
     namedWindow("Source Capture");
     namedWindow("Copy Capture");
 
-    createTrackbar("Blur Level", "Copy Capture" , NULL, trackbar_max_value, on_trackbar);
+    createTrackbar("Blur Level", "Copy Capture" , NULL, trackbar_max_value, on_blur_trackbar);
     setTrackbarPos("Blur Level", "Copy Capture", 0);
+
+    createTrackbar("Brightness Level", "Copy Capture" , NULL, trackbar_max_value, on_bright_trackbar);
+    setTrackbarPos("Brightness Level", "Copy Capture", 0);
+
+    createTrackbar("Contrast Level", "Copy Capture" , NULL, trackbar_max_value, on_contrast_trackbar);
+    setTrackbarPos("Contrast Level", "Copy Capture", 0);
 
     optionsHeader();
 
@@ -48,8 +67,10 @@ int main(int argc, char** argv)
         if (possible_operations.find(pressed_key) != possible_operations.end()) operations_array.push_back(pressed_key);
 
         int kernel_size = (trackbar_value * 2) + 1;
+        int brightness = brightness_level - 50;
+        float contrast = (contrast_level + 1)/10;
 
-        if(operations(src_frame, cpy_frame, operations_array, kernel_size)) break; // do operation, an ESC returns 1, so the videos end.
+        if(operations(src_frame, cpy_frame, operations_array, kernel_size, brightness, contrast)) break; // do operation, an ESC returns 1, so the videos end.
         
         imshow("Source Capture", src_frame);
         imshow("Copy Capture", cpy_frame);

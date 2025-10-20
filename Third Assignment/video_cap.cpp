@@ -8,12 +8,16 @@ using namespace std;
 
 void optionsHeader(){
     cout << "B or b : Blurring (Gaussian)" << endl;
-    cout << "C or c : Edge Detection (Canny)" << endl;
+    cout << "E or e : Edge Detection (Canny)" << endl;
     cout << "S or s : Gradient Estimation (SobelX)" << endl;
-    cout << "Backspace : Back to Source Image" << endl;
+    cout << "R or r : Brightness Enhancement" << endl;
+    cout << "T or t : Contrast Enhancement" << endl;
+    cout << "N or n : Negative" << endl;
+    cout << "C or c : Clear all operations" << endl;
+    cout << "Backspace : Undo the last operation" << endl;
 }
 
-int operations(Mat src, Mat cpy, vector<int> operations, int size){
+int operations(Mat src, Mat cpy, vector<int>& operations, int size, int brightness, float contrast){
 
     for(auto operation : operations){
 
@@ -23,18 +27,37 @@ int operations(Mat src, Mat cpy, vector<int> operations, int size){
             case 'B': 
                 GaussianBlur(cpy, cpy, Size(size,size),0);
                 break;
-            case 'c':
-            case 'C':
+            case 'e':
+            case 'E':
                 edges(cpy);
                 break;
             case 's':
             case 'S':
                 gradient(cpy);
                 break;
+            case 'r':
+            case 'R':
+                cpy.convertTo(cpy, -1, 1, brightness); 
+                break;
+            case 't':
+            case 'T':
+                cpy.convertTo(cpy, -1, contrast, 0);
+                break;
+            case 'n':
+            case 'N':
+                cpy.convertTo(cpy, -1, -1, 255);
+                break;
+            case 'c':
+            case 'C':
+                src.copyTo(cpy);
+                break;
             case 27: 
                 return 1;
             case 8:
-                src.copyTo(cpy);
+                if(operations.size() > 1){
+                    operations.pop_back();
+                    operations.pop_back();
+                }
         }
     }
 

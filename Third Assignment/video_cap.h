@@ -6,6 +6,6 @@ using namespace cv;
 using namespace std;
 
 void optionsHeader();
-int operations(Mat src, Mat cpy,  vector<int> operation, int size);
+int operations(Mat src, Mat cpy, vector<int>& operations, int size, int brightness, float contrast);
 void edges(Mat cpy);
 void gradient(Mat cpy);
