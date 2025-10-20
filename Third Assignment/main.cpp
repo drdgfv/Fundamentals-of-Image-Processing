@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 
     int camera = 0, pressed_key;
     vector<int> operations_array; //oerations array to cumulative operations;
-    unordered_set <char> possible_operations = {'C','c','B','b',27,8}; //the set of possible operations
+    unordered_set <char> possible_operations = {'C','c','B','b','S','s',27,8}; //the set of possible operations
 
     VideoCapture src_cap;
     VideoCapture cpy_cap;
