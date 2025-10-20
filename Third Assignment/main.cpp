@@ -27,8 +27,11 @@ void on_contrast_trackbar(int pos, void* userdata) {
 
 int main(int argc, char** argv)
 {
+    // cout << getBuildInformation() << endl;
 
     int camera = 0, pressed_key;
+    int recording = 0;
+
     vector<int> operations_array; //oerations array to cumulative operations;
     unordered_set <char> possible_operations = {'C','c', //the set of possible operations
                                                 'B','b',
@@ -41,12 +44,12 @@ int main(int argc, char** argv)
                                                 'Z','z', 
                                                 'L','l',
                                                 'H','h',
+                                                'V','v',
+                                                'A','a',
                                                 27,
                                                 8}; 
 
-    VideoCapture src_cap;
-    VideoCapture cpy_cap;
-
+    VideoCapture cap;
     namedWindow("Source Capture");
     namedWindow("Copy Capture");
 
@@ -61,37 +64,61 @@ int main(int argc, char** argv)
 
     optionsHeader();
 
-    if(!src_cap.open(camera)) return 0;
+    if(!cap.open(camera)) return 0;
+
+    int frame_width = static_cast<int>(cap.get(CAP_PROP_FRAME_WIDTH));
+    int frame_height = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
+    double fps = 25.0;
+    const int frame_delay = 1000/25;
+
+    // cout << "Gravando com dimensões: " << frame_width << "x" << frame_height << endl;
+
+    // if (frame_width == 0 || frame_height == 0) {
+    //     cerr << "ERRO: Dimensões do frame da câmera são inválidas (zero)!" << endl;
+    //     return -1;
+    // }   
+
+    VideoWriter video_writer;
+    string filename = "../output.avi";
+    int codec = VideoWriter::fourcc('M', 'J', 'P', 'G');
+    Size frame_size(frame_width, frame_height);
+
+    video_writer.open(filename, codec, fps, frame_size, true);
+
     for(;;)
     {
         Mat src_frame;
         Mat cpy_frame;
         
-        cpy_cap = src_cap;
-        src_cap >> src_frame;
-        cpy_cap >> cpy_frame;
+        cap >> src_frame >> cpy_frame;
         
         if( src_frame.empty() ) break;
         
-        pressed_key = waitKey(1);
+        pressed_key = waitKey(frame_delay); //para evitar aceleração do video gravado
 
         // update operations_array if the key pressed is one of the possible operations
         if (possible_operations.find(pressed_key) != possible_operations.end()) operations_array.push_back(pressed_key);
 
-        // for(auto operation : operations_array) cout<< operation << endl;
+        // for(auto operation : operations_array) if(operation=='v' || operation=='v') cout<< operation << endl;
 
         int kernel_size = (trackbar_value * 2) + 1; 
         int brightness = brightness_level - 50;
         float contrast = (contrast_level + 1)/10;
 
-        if(operations(src_frame, cpy_frame, operations_array, kernel_size, brightness, contrast)) break; // do operation, an ESC returns 1, so the videos end.
+        if(operations(src_frame, cpy_frame, operations_array, kernel_size, brightness, contrast, &recording)) break; // do operation, an ESC returns 1, so the videos end.
 
         imshow("Source Capture", src_frame);
         imshow("Copy Capture", cpy_frame);
-  
+
+        // cout<<recording<<endl;
+
+        if(recording){
+            video_writer.write(cpy_frame);
+        }
+
     }
 
-    src_cap.release();
-    cpy_cap.release(); 
+    cap.release();
+    video_writer.release();
     return 0;
 }

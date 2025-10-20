@@ -13,15 +13,17 @@ void optionsHeader(){
     cout << "R or r : Brightness Enhancement" << endl;
     cout << "T or t : Contrast Enhancement" << endl;
     cout << "N or n : Negative" << endl;
-    cout << "G or g : Gay Scale" << endl;
+    cout << "G or g : Gray Scale" << endl;
     cout << "Z or z : Resize in 1/4 both dimensions" << endl;
-    cout << "L or l : Resize in 1/4 both dimensions" << endl;
+    cout << "L or l : Rotation in 90 degrees" << endl;
     cout << "H or h : Flip horizontal" << endl;
+    cout << "V or v : Flip vertical" << endl;
+    cout << "A or a: Start or stop recording" << endl;
     cout << "C or c : Clear all operations" << endl;
     cout << "Backspace : Undo the last operation" << endl;
 }
 
-int operations(Mat& src, Mat& cpy, vector<int>& operations, int size, int brightness, float contrast){
+int operations(Mat& src, Mat& cpy, vector<int>& operations, int size, int brightness, float contrast, int *recording){
 
     for(auto operation : operations){
 
@@ -66,6 +68,18 @@ int operations(Mat& src, Mat& cpy, vector<int>& operations, int size, int bright
             case 'h':
             case 'H':
                 flip(cpy,cpy,1);
+                break;
+            case 'v':
+            case 'V':
+                flip(cpy,cpy,0);
+                break;
+            case 'a':
+            case 'A':{
+                *recording = !(*recording);
+                operations.pop_back();
+                if(*recording) cout<<"recording..."<<endl;
+                else cout<<"recording finished"<<endl;
+            }
                 break;
             case 'c':
             case 'C':
