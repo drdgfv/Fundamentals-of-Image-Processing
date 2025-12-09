@@ -1,4 +1,4 @@
-<img width="1354" height="389" alt="image" src="https://github.com/user-attachments/assets/5cac28d0-e7cf-452f-8263-b375f35fe899" />
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 03-20-21" src="https://github.com/user-attachments/assets/f41b9aa0-8e86-4129-b4e2-1ca015136201" /><img width="1354" height="389" alt="image" src="https://github.com/user-attachments/assets/5cac28d0-e7cf-452f-8263-b375f35fe899" />
 
 # Fundamentals-of-Image-Processing
 
@@ -201,4 +201,159 @@ Illustration 16: Image after applying a Gaussian filter 10 times.
 </table>
 Illustration 17: Results of image convolution with the generic high-pass, Laplacian, Prewitt Hy, and Sobel Hx filters, respectively.
   
+</details>
+
+<details>
+<summary><b> Assignment III – Video Processing with OpenCV </b> </summary>
+  
+## 1) Configure your programming environment and run the base program — Completed Satisfactorily
+
+The initial stage required more time due to the installation and configuration of the OpenCV library, downloaded from the link provided in the project specification. Integration into the project was handled via a CMakeLists.txt file.
+
+The base program was modified to display two simultaneous captures, allowing side-by-side visualization of the original and processed video streams.
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-17 21-21-04" src="https://github.com/user-attachments/assets/2c0c0689-a13c-435e-8291-f9b24929fde5" />
+Illustration 1: Visualization of the two video captures (original and processed).
+
+## 2) Apply GaussianBlur using a Trackbar — Completed Satisfactorily
+
+The following functions were used:
+- `createTrackbar`
+- `GaussianBlur`
+
+The trackbar controls a value from 0 to 50, internally mapped to positive odd kernel sizes.
+
+A helper function was created:
+
+```
+int operations(Mat src, Mat cpy, int operation, int size)
+```
+
+Return values:
+- `0` → key does not trigger an operation  
+- `1` → key corresponds to an effect to be applied  
+
+This enables clean switch-based handling of multiple transformations.
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-17 23-02-02" src="https://github.com/user-attachments/assets/acab819f-37ac-493b-b821-d96d3212cc7c" />
+Illustration 2: Blur operation controlled by a trackbar, shown next to the original video.
+
+## 3) Edge detection using Canny — Completed Satisfactorily
+
+The `cvtColor` function was used for the required RGB → Grayscale conversion.  
+Pipeline:
+
+1. Convert frame to grayscale  
+2. Apply `Canny`  
+3. Convert back to RGB for unified display format  
+4. Combine with previously applied operations if needed  
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 01-10-52" src="https://github.com/user-attachments/assets/827d6267-19e7-4e8e-8076-129fb16fff26" />
+Illustration 3: Canny edge detection applied to the video stream.
+
+## 4) Gradient estimation using the Sobel operator — Completed Satisfactorily
+
+The implementation uses:
+- `cvtColor` for grayscale conversion  
+- reconversion to a 3-channel image to preserve consistency  
+- application of `Sobel`  
+- `convertTo` for clamping and normalizing output values  
+
+This produces the classic Sobel effect taught throughout the course.
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 01-52-40" src="https://github.com/user-attachments/assets/ca2aac6c-c932-43b0-871c-c937c249d1b9" />
+Illustration 4: Sobel gradient visualization beside the original video.
+
+
+## 5) Brightness adjustment, contrast adjustment, and negative using convertTo — Completed Satisfactorily
+
+The copy window was extended to support multiple trackbars:
+- Blur Level  
+- Brightness Level  
+- Contrast Level  
+
+All transformations use the standard linear pointwise formula:
+
+```
+g(x,y) = alpha * f(x,y) + beta
+```
+
+This enables:
+- Brightness increase/decrease  
+- Contrast expansion/compression  
+- Negative effect  
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 03-18-27" src="https://github.com/user-attachments/assets/9ab7e7ea-96f0-4531-aadd-a8d76f8629a3" />
+Illustration 5.1: Negative operation applied to the video.
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 03-19-34" src="https://github.com/user-attachments/assets/158631de-41f9-42a2-af54-a7221331e507" />
+Illustration 5.2: Brightness adjustment applied to the video.
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 03-20-21" src="https://github.com/user-attachments/assets/3fab7619-a4b8-4bcf-96f3-3ed0d9c8962c" />
+Illustration 5.3: Contrast adjustment applied to the video.
+
+## 6) RGB to Grayscale conversion — Completed Satisfactorily
+
+Implemented using:
+
+```
+cvtColor(src, gray, COLOR_BGR2GRAY);
+```
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 06-03-42" src="https://github.com/user-attachments/assets/48a5b077-b33a-40b7-b92a-48f6eaf2b530" />
+Illustration 6: Grayscale (luminance) operation applied to the video.
+
+## 7) Resize the video to half of its dimensions — Completed Satisfactorily
+
+Performed with:
+
+```
+resize(src, dst, Size(), 0.5, 0.5);
+```
+
+Supports other scaling factors as well.
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 06-04-18" src="https://github.com/user-attachments/assets/4c841c00-f2bf-40a2-a006-ed0f7dd6f73a" />
+Illustration 7: Video scaled down to 50% of its original dimensions.
+
+## 8) Rotate the video by 90 degrees — Completed Satisfactorily
+
+Rotation implemented using:
+
+```
+rotate(src, dst, ROTATE_90_CLOCKWISE);
+```
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 06-04-47" src="https://github.com/user-attachments/assets/52e27858-9e13-41ea-9d8c-74e767ab424e" />
+Illustration 8: 90-degree rotation applied to the video.
+
+## 9) Horizontal and vertical mirroring — Completed Satisfactorily
+
+Implemented with:
+
+```
+flip(src, dst, 0);  // vertical
+flip(src, dst, 1);  // horizontal
+```
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 04-19-00" src="https://github.com/user-attachments/assets/7fad46b3-b89c-4999-8982-43b9b8f67278" />
+Illustration 9.1: Horizontal flip applied to the video.  
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 06-08-46" src="https://github.com/user-attachments/assets/5f10b5d3-f904-4c95-b9cb-6dc09e10a7f0" />
+Illustration 9.2: Vertical flip applied to the video.
+
+## 10) Video recording including all effects (except rotation and resizing) — Completed Satisfactorily
+
+This stage required deeper understanding of OpenCV structures, including:
+- how `VideoWriter` behaves  
+- codec selection and handling  
+- matching resolution and FPS between input and output  
+
+The chosen codec was **Motion-JPEG**, generating `.avi` files.
+
+A challenge encountered involved FPS synchronization: the recorded video played faster than the live capture, despite the frame acquisition appearing slower. The issue remains partially unresolved, but the resulting
+
+<img width="1169" height="426" alt="Screenshot from 2025-10-20 06-13-39" src="https://github.com/user-attachments/assets/6fd67b6a-5a94-421d-a161-28e9dd760008" />
+Illustration 10: Demonstration of saving.
+
 </details>
