@@ -1,4 +1,4 @@
-<img width="1920" height="1080" alt="Screenshot from 2025-10-20 03-20-21" src="https://github.com/user-attachments/assets/f41b9aa0-8e86-4129-b4e2-1ca015136201" /><img width="1354" height="389" alt="image" src="https://github.com/user-attachments/assets/5cac28d0-e7cf-452f-8263-b375f35fe899" />
+<img width="1920" height="1080" alt="Screenshot from 2025-10-20 03-20-21" src="https://github.com/user-attachments/assets/f41b9aa0-8e86-4129-b4e2-1ca015136201" />
 
 # Fundamentals-of-Image-Processing
 
